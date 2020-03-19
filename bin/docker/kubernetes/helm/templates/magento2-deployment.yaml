@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: magento2-service-{{ .Release.Name }}
+  namespace: default
+  labels:
+    cd-hipay: cron-delete
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      name: web
+      targetPort: 80
+  selector:
+    app: magento2-{{ .Release.Name }}
+    tier: frontend-{{ .Release.Name }}
+  type: NodePort
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingressroute-tls-{{ .Release.Name }}
+  namespace: default
+  labels:
+    cd-hipay: cron-delete
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.magento2_url  }}`)
+      kind: Rule
+      priority: 1
+      services:
+        - name: magento2-service-{{ .Release.Name }}
+          port: 80
+      middlewares:
+        - name: hipay-ipwhitelist
+  tls:
+    certResolver: default
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mg2-pv-claim-{{ .Release.Name }}
+  labels:
+    app: magento2-{{ .Release.Name }}
+    cd-hipay: cron-delete
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: magento2-{{ .Release.Name }}
+  labels:
+    app: magento2-{{ .Release.Name }}
+    cd-hipay: cron-delete
+spec:
+  selector:
+    matchLabels:
+      app: magento2-{{ .Release.Name }}
+      tier: frontend-{{ .Release.Name }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: magento2-{{ .Release.Name }}
+        tier: frontend-{{ .Release.Name }}
+        cd-hipay: cron-delete
+    spec:
+      containers:
+      - image: {{ .Values.magento2_image }}:{{ .Values.magento2_tag }}
+        imagePullPolicy: Always
+        name: magento2-{{ .Release.Name }}
+        resources:
+          requests:
+            memory: "256M"
+            cpu: "500m"
+          limits:
+            memory: "512M"
+            cpu: "1000m"
+        envFrom:
+          - configMapRef:
+              name: magento2-configmap-{{ .Release.Name }}
+        ports:
+          - containerPort: 80
+            name: magento2
+        volumeMounts:
+          - name: magento2-persistent-storage-{{ .Release.Name }}
+            mountPath: /var/www/html
+      volumes:
+        - name: magento2-persistent-storage-{{ .Release.Name }}
+          persistentVolumeClaim:
+            claimName: mg2-pv-claim-{{ .Release.Name }}
+      nodeSelector:
+        node_type: default
+      tolerations:
+        - key: cd_service
+          operator: Equal
+          value: only
+          effect: NoExecute
