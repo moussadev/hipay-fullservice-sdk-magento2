@@ -43,7 +43,7 @@ stages:
       - bin/tests/errors
     when: always
 
-build-test-2-1-10:
+.build-test-2-1-10:
   stage: build-test
   script:
     - docker-compose -f docker-compose.test.yml build
@@ -51,7 +51,7 @@ build-test-2-1-10:
   tags:
     - gcp-default-runner-prod
 
-casperjs-2-1-10:
+.casperjs-2-1-10:
   <<: *test_definition
   stage: test
   script:
@@ -91,6 +91,10 @@ deploy2recette:
       --set magento2_tag="${CI_COMMIT_REF_SLUG}"
       --set magento2_url="https://${DOCKER_STACK}-${DOCKER_SERVICE}-${CI_COMMIT_REF_SLUG}.${PI_CD_URL}"
       --set magento2_url_secure="https://${DOCKER_STACK}-${DOCKER_SERVICE}-${CI_COMMIT_REF_SLUG}.${PI_CD_URL}"
+      --set github_api_token="${GITHUB_TOKEN}"
+      --set gitlab_api_token="${GITLAB_API_TOKEN}"
+      --set mage_account_public_key="${MAGE_ACCOUNT_PUBLIC_KEY}"
+      --set mage_account_private_key="${MAGE_ACCOUNT_PRIVATE_KEY}"
       --set hipay_api_user_test="$HIPAY_API_USER_RE7"
       --set hipay_api_password_test="$HIPAY_API_PASSWORD_RE7"
       --set hipay_tokenjs_username_test="$HIPAY_TOKENJS_USERNAME_RE7"
