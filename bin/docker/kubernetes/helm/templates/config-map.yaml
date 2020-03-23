@@ -12,8 +12,8 @@ data:
   MAGE_ADMIN_EMAIL: john.doe@yopmail.com
   MAGE_ADMIN_USER: admin
   MAGE_ADMIN_PWD: admin123
-  MAGE_BASE_URL: {{ .Values.magento2_url }}
-  MAGE_BASE_URL_SECURE: {{ .Values.magento2_url_secure }}
+  MAGE_BASE_URL: http://{{ .Values.magento2_url }}
+  MAGE_BASE_URL_SECURE: https://{{ .Values.magento2_url }}
   MAGE_BACKEND_FRONTNAME: admin
   MAGE_DB_HOST: magento2-mysql-{{ .Release.Name }}
   MAGE_DB_PORT: "3306"
