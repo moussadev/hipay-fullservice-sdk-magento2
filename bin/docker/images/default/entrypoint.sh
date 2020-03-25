@@ -9,6 +9,9 @@ ENV_STAGE="stage"
 ENV_PROD="production"
 NEED_SETUP_CONFIG=0
 
+pwd
+ls -al
+
 #==========================================
 # CHECK IF MAGENTO IS INSTALLED
 #==========================================
