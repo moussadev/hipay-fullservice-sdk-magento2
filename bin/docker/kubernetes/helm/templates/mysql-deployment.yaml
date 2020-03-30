@@ -67,6 +67,7 @@ spec:
         volumeMounts:
           - name: mysql-persistent-storage-{{ .Release.Name }}
             mountPath: /var/lib/mysql
+            subPath: mysql
       volumes:
         - name: mysql-persistent-storage-{{ .Release.Name }}
           persistentVolumeClaim:

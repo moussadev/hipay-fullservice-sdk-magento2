@@ -58,20 +58,6 @@ spec:
       middlewares:
         - name: hipay-ipwhitelist
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mg2-pv-claim-{{ .Release.Name }}
-  labels:
-    app: magento2-{{ .Release.Name }}
-    cd-hipay: cron-delete
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 20Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -110,13 +96,6 @@ spec:
         ports:
           - containerPort: 80
             name: magento2
-        volumeMounts:
-          - name: magento2-persistent-storage-{{ .Release.Name }}
-            mountPath: /var/www/html
-      volumes:
-        - name: magento2-persistent-storage-{{ .Release.Name }}
-          persistentVolumeClaim:
-            claimName: mg2-pv-claim-{{ .Release.Name }}
       nodeSelector:
         node_type: default
       tolerations:
