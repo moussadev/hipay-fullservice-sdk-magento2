@@ -9,9 +9,6 @@ ENV_STAGE="stage"
 ENV_PROD="production"
 NEED_SETUP_CONFIG=0
 
-pwd
-ls -al
-
 #==========================================
 # CHECK IF MAGENTO IS INSTALLED
 #==========================================
@@ -138,7 +135,7 @@ printf "${COLOR_SUCCESS}    |                                                   
 printf "${COLOR_SUCCESS}    |               DOCKER MAGENTO TO HIPAY $ENVIRONMENT IS UP             ${NC}\n"
 printf "${COLOR_SUCCESS}    |                                                                      ${NC}\n"
 printf "${COLOR_SUCCESS}    |   URL FRONT       : $MAGE_BASE_URL                                   ${NC}\n"
-printf "${COLOR_SUCCESS}    |   URL BACK        : $MAGE_BASE_URLadmin                             ${NC}\n"
+printf "${COLOR_SUCCESS}    |   URL BACK        : ${MAGE_BASE_URL}admin                             ${NC}\n"
 printf "${COLOR_SUCCESS}    |   URL MAIL CATCHER: $MAGENTO_URL:1095/                               ${NC}\n"
 printf "${COLOR_SUCCESS}    |                                                                      ${NC}\n"
 printf "${COLOR_SUCCESS}    |   PHP VERSION     : $PHP_VERSION                                     ${NC}\n"
