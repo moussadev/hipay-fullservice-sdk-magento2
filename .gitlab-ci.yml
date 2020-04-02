@@ -43,7 +43,11 @@ stages:
       - bin/tests/errors
     when: always
 
-.build-test-2-1-10:
+#########################
+####      JOBS      ####
+########################
+
+build-test-2-1-10:
   stage: build-test
   script:
     - docker-compose -f docker-compose.test.yml build
@@ -51,7 +55,7 @@ stages:
   tags:
     - gcp-default-runner-prod
 
-.casperjs-2-1-10:
+casperjs-2-1-10:
   <<: *test_definition
   stage: test
   script:
