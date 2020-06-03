@@ -326,7 +326,7 @@ class Order extends CommonRequest
                 array(
                     "merchantPromotion" => $merchantPromotion && !empty($merchantPromotion) ?
                     $merchantPromotion :
-                    \HiPay\Fullservice\Helper\Calcul::calculMerchantPromotion(
+                    \HiPay\Fullservice\Helper\MerchantPromotionCalculator::calculate(
                         $payment_product,
                         $orderRequest->amount
                     )
