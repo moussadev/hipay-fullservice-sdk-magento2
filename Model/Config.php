@@ -16,13 +16,14 @@
 
 namespace HiPay\FullserviceMagento\Model;
 
-use HiPay\Fullservice\HTTP\Configuration\Configuration as ConfigSDK;
 use HiPay\FullserviceMagento\Model\Config\AbstractConfig;
-use HiPay\Fullservice\HTTP\Configuration\ConfigurationInterface;
 use HiPay\FullserviceMagento\Model\System\Config\Source\Environments;
 use HiPay\FullserviceMagento\Model\System\Config\Source\PaymentActions;
-use HiPay\FullserviceMagento\Model\System\Config\Source\Templates;
 use HiPay\FullserviceMagento\Model\System\Config\Source\PaymentProduct;
+use HiPay\FullserviceMagento\Model\System\Config\Source\Templates;
+use HiPay\Fullservice\HTTP\Configuration\Configuration as ConfigSDK;
+use HiPay\Fullservice\HTTP\Configuration\ConfigurationInterface;
+use HiPay\FullserviceMagento\Model\Method\ApplePay;
 
 /**
  * Main Config Class
@@ -38,7 +39,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
 {
     const STATUS_AUTHORIZED = 'hipay_authorized';
     const STATUS_AUTHORIZATION_REQUESTED = 'hipay_authorization_requested';
-    const STATUS_AUTHORIZED_PENDING = "hipay_authorized_pending";
+    const STATUS_AUTHORIZED_PENDING = 'hipay_authorized_pending';
     const STATUS_CAPTURE_REQUESTED = 'hipay_capture_requested';
     const STATUS_PARTIALLY_CAPTURED = 'hipay_partially_captured';
     const STATUS_REFUND_REQUESTED = 'hipay_refund_requested';
@@ -47,7 +48,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
     const STATUS_EXPIRED = 'hipay_expired';
     const STATUS_AUTHENTICATION_REQUESTED = 'hipay_authentication_requested';
 
-    const CONFIG_HIPAY_KEY_CC_TYPE = "cctypes_mapper";
+    const CONFIG_HIPAY_KEY_CC_TYPE = 'cctypes_mapper';
 
     /**
      *
@@ -109,8 +110,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
         \Magento\Framework\App\Cache\Frontend\Pool $cacheFrontendPool,
         $params = []
-    )
-    {
+    ) {
         parent::__construct($scopeConfig, $configWriter);
 
         $this->_storeManager = $storeManager;
@@ -144,13 +144,13 @@ class Config extends AbstractConfig implements ConfigurationInterface
                 $env = ($this->_forceStage) ? ConfigSDK::API_ENV_STAGE : ConfigSDK::API_ENV_PRODUCTION;
             }
             $this->_configSDK = new ConfigSDK(
-                array(
+                [
                     'apiUsername' => $apiUsername,
                     'apiPassword' => $apiPassword,
                     'apiEnv' => $env,
                     'apiHTTPHeaderAccept' => 'application/json',
-                    'proxy' => $this->getProxy()
-                )
+                    'proxy' => $this->getProxy(),
+                ]
             );
         } catch (\Exception $e) {
             $this->_configSDK = null;
@@ -194,7 +194,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
      */
     public function isMoto()
     {
-        return (bool)$this->getOrder()->getPayment()->getAdditionalInformation('is_moto') ?: false;
+        return (bool) $this->getOrder()->getPayment()->getAdditionalInformation('is_moto') ?: false;
     }
 
     /**
@@ -212,7 +212,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
      */
     public function getPaymentProductsList()
     {
-        $list = explode(",", $this->getValue('payment_products'));
+        $list = explode(',', $this->getValue('payment_products'));
         return $list;
     }
 
@@ -243,7 +243,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function getAllowedPaymentProductCategories()
     {
-        return explode(",", $this->getValue('payment_products_categories'));
+        return explode(',', $this->getValue('payment_products_categories'));
     }
 
     /**
@@ -271,8 +271,19 @@ class Config extends AbstractConfig implements ConfigurationInterface
         return $this->getApiEnv() == ConfigSDK::API_ENV_STAGE || $this->_forceStage;
     }
 
-    public function hasCredentials($withTokenJs = false)
+    public function hasCredentials($withTokenJs = false, $withApplePay = false)
     {
+        if ($withApplePay) {
+            //token JS credential
+            $apiUsernameApplepay = $this->getApiUsernameApplePay();
+            $apiPasswordApplepay = $this->getApiPasswordApplePay();
+            $secretKeyApplePay = $this->getSecretPassphraseApplePay();
+
+            if (empty($apiUsernameApplepay) || empty($apiPasswordApplepay || empty($secretKeyApplePay))) {
+                return false;
+            }
+        }
+
         if ($withTokenJs) {
             //token JS credential
             $apiUsernameTokenJs = $this->getApiUsernameTokenJs();
@@ -298,13 +309,17 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function getApiUsername()
     {
+        if ($this->getMethodCode() === ApplePay::HIPAY_METHOD_CODE) {
+            return $this->getApiUsernameApplePay();
+        }
+
         if ($this->mustUseMotoCredentials()) {
             return $this->getApiUsernameMoto();
         }
 
-        $key = "api_username";
+        $key = 'api_username';
         if ($this->isStageMode()) {
-            $key = "api_username_test";
+            $key = 'api_username_test';
         }
 
         return $this->getGeneraleValue($key);
@@ -312,13 +327,17 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function getApiPassword()
     {
+        if ($this->getMethodCode() === ApplePay::HIPAY_METHOD_CODE) {
+            return $this->getApiPasswordApplePay();
+        }
+
         if ($this->mustUseMotoCredentials()) {
             return $this->getApiPasswordMoto();
         }
 
-        $key = "api_password";
+        $key = 'api_password';
         if ($this->isStageMode()) {
-            $key = "api_password_test";
+            $key = 'api_password_test';
         }
 
         return $this->getGeneraleValue($key);
@@ -326,12 +345,16 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function getSecretPassphrase()
     {
+        if ($this->getMethodCode() === ApplePay::HIPAY_METHOD_CODE) {
+            return $this->getSecretPassphraseApplePay();
+        }
+
         if ($this->mustUseMotoCredentials()) {
             return $this->getSecretPassphraseMoto();
         }
-        $key = "secret_passphrase";
+        $key = 'secret_passphrase';
         if ($this->isStageMode()) {
-            $key = "secret_passphrase_test";
+            $key = 'secret_passphrase_test';
         }
 
         return $this->getGeneraleValue($key);
@@ -339,9 +362,9 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function getApiUsernameMoto()
     {
-        $key = "api_username";
+        $key = 'api_username';
         if ($this->isStageMode()) {
-            $key = "api_username_test";
+            $key = 'api_username_test';
         }
 
         $apiUsername = $this->getGeneraleValue($key, 'hipay_credentials_moto');
@@ -354,9 +377,9 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function getApiPasswordMoto()
     {
-        $key = "api_password";
+        $key = 'api_password';
         if ($this->isStageMode()) {
-            $key = "api_password_test";
+            $key = 'api_password_test';
         }
 
         $apiPassword = $this->getGeneraleValue($key, 'hipay_credentials_moto');
@@ -369,9 +392,9 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function getSecretPassphraseMoto()
     {
-        $key = "secret_passphrase";
+        $key = 'secret_passphrase';
         if ($this->isStageMode()) {
-            $key = "secret_passphrase_test";
+            $key = 'secret_passphrase_test';
         }
 
         $apiPassphrase = $this->getGeneraleValue($key, 'hipay_credentials_moto');
@@ -384,21 +407,50 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function getApiUsernameTokenJs()
     {
-        $key = "api_username";
+        $key = 'api_username';
         if ($this->isStageMode()) {
-            $key = "api_username_test";
+            $key = 'api_username_test';
         }
         return $this->getGeneraleValue($key, 'hipay_credentials_tokenjs');
     }
 
     public function getApiPasswordTokenJs()
     {
-        $key = "api_password";
+        $key = 'api_password';
         if ($this->isStageMode()) {
-            $key = "api_password_test";
+            $key = 'api_password_test';
         }
 
         return $this->getGeneraleValue($key, 'hipay_credentials_tokenjs');
+    }
+
+    public function getApiUsernameApplePay()
+    {
+        $key = 'api_username';
+        if ($this->isStageMode()) {
+            $key = 'api_username_test';
+        }
+        return $this->getGeneraleValue($key, 'hipay_credentials_applepay');
+    }
+
+    public function getApiPasswordApplePay()
+    {
+        $key = 'api_password';
+        if ($this->isStageMode()) {
+            $key = 'api_password_test';
+        }
+
+        return $this->getGeneraleValue($key, 'hipay_credentials_applepay');
+    }
+
+    public function getSecretPassphraseApplePay()
+    {
+        $key = 'secret_passphrase';
+        if ($this->isStageMode()) {
+            $key = 'secret_passphrase_test';
+        }
+
+        return $this->getGeneraleValue($key, 'hipay_credentials_applepay');
     }
 
     public function getHashingAlgorithm()
@@ -408,9 +460,9 @@ class Config extends AbstractConfig implements ConfigurationInterface
             $group = 'hipay_credentials_moto';
         }
 
-        $key = "hashing_algorithm";
+        $key = 'hashing_algorithm';
         if ($this->isStageMode()) {
-            $key = "hashing_algorithm_test";
+            $key = 'hashing_algorithm_test';
         }
         return $this->getGeneraleValue($key, $group);
     }
@@ -422,9 +474,9 @@ class Config extends AbstractConfig implements ConfigurationInterface
             $group = 'hipay_credentials_moto';
         }
 
-        $key = "hashing_algorithm";
+        $key = 'hashing_algorithm';
         if ($this->isStageMode()) {
-            $key = "hashing_algorithm_test";
+            $key = 'hashing_algorithm_test';
         }
         $this->setGeneralValue($key, $hash, $group, $scope);
     }
@@ -436,16 +488,16 @@ class Config extends AbstractConfig implements ConfigurationInterface
     {
         $group = 'hipay_proxy_settings';
 
-        if (empty($this->getGeneraleValue("hipay_proxy_host", $group))) {
-            return array();
+        if (empty($this->getGeneraleValue('hipay_proxy_host', $group))) {
+            return [];
         }
 
-        return array(
-            "host" => $this->getGeneraleValue("hipay_proxy_host", $group),
-            "port" => $this->getGeneraleValue("hipay_proxy_port", $group),
-            "user" => $this->getGeneraleValue("hipay_proxy_user", $group),
-            "password" => $this->getGeneraleValue("hipay_proxy_password", $group)
-        );
+        return [
+            'host' => $this->getGeneraleValue('hipay_proxy_host', $group),
+            'port' => $this->getGeneraleValue('hipay_proxy_port', $group),
+            'user' => $this->getGeneraleValue('hipay_proxy_user', $group),
+            'password' => $this->getGeneraleValue('hipay_proxy_password', $group),
+        ];
     }
 
     /**
@@ -466,7 +518,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
      */
     public function isSendingNotifyUrl()
     {
-        $key = "send_notification_url";
+        $key = 'send_notification_url';
         return $this->getOtherConfiguration($key);
     }
 
@@ -477,7 +529,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
      */
     public function isFingerprintEnabled()
     {
-        $key = "fingerprint_enabled";
+        $key = 'fingerprint_enabled';
         return $this->getOtherConfiguration($key);
     }
 
@@ -488,7 +540,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
      */
     public function isBasketEnabled()
     {
-        $key = "basket_enabled";
+        $key = 'basket_enabled';
         return $this->getOtherConfiguration($key);
     }
 
@@ -497,7 +549,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
      */
     public function useOrderCurrency()
     {
-        $key = "currency_transaction";
+        $key = 'currency_transaction';
         return $this->getOtherConfiguration($key);
     }
 
@@ -544,7 +596,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
      */
     public function getEanAttribute()
     {
-        $key = "basket_attribute_ean";
+        $key = 'basket_attribute_ean';
         return $this->getOtherConfiguration($key);
     }
 
@@ -566,7 +618,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
      */
     public function getVersionInfo()
     {
-        $key = "github_module_version";
+        $key = 'github_module_version';
         $this->setStoreId(0);
 
         return $this->getGeneraleValue($key, 'hipay_module');
@@ -577,12 +629,11 @@ class Config extends AbstractConfig implements ConfigurationInterface
      */
     public function setModuleVersionInfo($info)
     {
-        $key = "github_module_version";
+        $key = 'github_module_version';
         $this->setStoreId(0);
         $this->setGeneralValue($key, $info, 'hipay_module', 'default');
         $this->_storeManager->getStore(0)->resetConfig();
     }
-
 
     public function getApiEndpoint()
     {
@@ -665,7 +716,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function isPaymentMethodActive()
     {
-        return $this->getValue("active");
+        return $this->getValue('active');
     }
 
     /**
@@ -790,7 +841,6 @@ class Config extends AbstractConfig implements ConfigurationInterface
             return $this->_configSDK->getDataApiHttpUserAgent();
         }
     }
-
 
     /**
      * {@inheritDoc}
