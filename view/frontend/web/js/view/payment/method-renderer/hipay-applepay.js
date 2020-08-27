@@ -17,14 +17,17 @@
  */
 
 define([
+  'ko',
   'jquery',
   'Magento_Checkout/js/view/payment/default',
   'Magento_Checkout/js/model/quote',
   'Magento_Checkout/js/model/url-builder',
   'Magento_Customer/js/model/customer',
   'mage/storage'
-], function ($, Component, quote, urlBuilder, customer, storage) {
+], function (ko, $, Component, quote, urlBuilder, customer, storage) {
   'use strict';
+
+  var canMakeApplePay = ko.observable(false);
   return Component.extend({
     defaults: {
       template: 'HiPay_FullserviceMagento/payment/hipay-applepay',
@@ -162,6 +165,12 @@ define([
           }
         }
       }, 500);
+    },
+    isApplePayAllowed: function () {
+      if (window.ApplePaySession && window.ApplePaySession.canMakePayments()) {
+        canMakeApplePay(true);
+        return true;
+      }
     },
 
     /**
