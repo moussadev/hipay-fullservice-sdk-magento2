@@ -104,7 +104,9 @@ class Synchronize extends \Magento\Backend\App\Action
             ConfigFactory::PRODUCTION,
             ConfigFactory::STAGE,
             ConfigFactory::PRODUCTION_MOTO,
-            ConfigFactory::STAGE_MOTO
+            ConfigFactory::STAGE_MOTO,
+            ConfigFactory::PRODUCTION_APPLEPAY,
+            ConfigFactory::STAGE_APPLEPAY
         );
 
         $store = $this->_storeManager->getStore($storeId);
