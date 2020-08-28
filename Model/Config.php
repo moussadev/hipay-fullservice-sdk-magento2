@@ -456,7 +456,9 @@ class Config extends AbstractConfig implements ConfigurationInterface
     public function getHashingAlgorithm()
     {
         $group = 'hipay_credentials';
-        if ($this->mustUseMotoCredentials()) {
+        if ($this->getMethodCode() === ApplePay::HIPAY_METHOD_CODE) {
+            $group = 'hipay_credentials_applepay';
+        } elseif ($this->mustUseMotoCredentials()) {
             $group = 'hipay_credentials_moto';
         }
 
@@ -470,7 +472,9 @@ class Config extends AbstractConfig implements ConfigurationInterface
     public function setHashingAlgorithm($hash, $scope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES)
     {
         $group = 'hipay_credentials';
-        if ($this->mustUseMotoCredentials()) {
+        if ($this->getMethodCode() === ApplePay::HIPAY_METHOD_CODE) {
+            $group = 'hipay_credentials_applepay';
+        } elseif ($this->mustUseMotoCredentials()) {
             $group = 'hipay_credentials_moto';
         }
 
