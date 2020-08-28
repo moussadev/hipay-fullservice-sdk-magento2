@@ -20,11 +20,9 @@ define([
   'ko',
   'jquery',
   'Magento_Checkout/js/view/payment/default',
-  'Magento_Checkout/js/model/quote',
-  'Magento_Checkout/js/model/url-builder',
-  'Magento_Customer/js/model/customer',
-  'mage/storage'
-], function (ko, $, Component, quote, urlBuilder, customer, storage) {
+  'Magento_Checkout/js/action/place-order',
+  'Magento_Ui/js/model/messages'
+], function (ko, $, Component, placeOrderAction, Messages) {
   'use strict';
 
   var canMakeApplePay = ko.observable(false);
@@ -115,7 +113,6 @@ define([
           );
 
           if (self.instanceApplePay) {
-            $('#payment-method-applepay').removeClass('hidden');
             self.instanceApplePay.on('paymentAuthorized', function (
               tokenHipay
             ) {
@@ -125,36 +122,18 @@ define([
                   self.creditCardType
               );
 
-              var serviceUrl;
-              var payload = {
-                cartId: quote.getQuoteId(),
-                paymentMethod: self.getData(),
-                billingAddress: quote.billingAddress()
-              };
-              if (customer.isLoggedIn()) {
-                serviceUrl = urlBuilder.createUrl(
-                  '/carts/mine/payment-information',
-                  {}
-                );
-              } else {
-                serviceUrl = urlBuilder.createUrl(
-                  '/guest-carts/:quoteId/payment-information',
-                  { quoteId: quote.getQuoteId() }
-                );
-                payload.email = quote.guestEmail;
-              }
-              storage
-                .post(serviceUrl, JSON.stringify(payload))
-                .done(function (response) {
-                  if (response.responseType !== 'error') {
-                    self.instanceApplePay.completePaymentWithSuccess();
-                    $.mage.redirect(self.afterPlaceOrderUrl);
-                  } else {
-                    // if order is declined ?
-                    self.instanceApplePay.completePaymentWithFailure();
-                  }
+              var deferred = $.Deferred();
+              $.when(placeOrderAction(self.getData(), new Messages()))
+                .fail(function (response) {
+                  deferred.reject(Error(response));
+                  self.instanceApplePay.completePaymentWithFailure();
                 })
-                .fail(self.instanceApplePay.completePaymentWithFailure);
+                .done(function () {
+                  deferred.resolve(true);
+                  self.instanceApplePay.completePaymentWithSuccess();
+                  $.mage.redirect(self.afterPlaceOrderUrl);
+                });
+              $('body').loader('hide');
             });
           }
         } else {
