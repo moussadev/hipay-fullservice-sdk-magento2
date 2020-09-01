@@ -77,7 +77,7 @@ define([
         // environment: self.env,
         lang: self.locale.length > 2 ? self.locale.substr(0, 2) : 'en',
         custom_urls: {
-          hipay_api: 'https://apple-pay-web-dot-pi-qa-applepay-web.appspot.com'
+          hipay_api: 'https://release-1-1-0-ibkxm2b6nq-ew.a.run.app'
         }
       });
 
