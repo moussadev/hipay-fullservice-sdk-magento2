@@ -311,7 +311,34 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 );
 
             $setup->getConnection()->createTable($table);
+        }
 
+        $this->installShippingMappingTable($setup, $context);
+
+        $setup->endSetup();
+    }
+
+    private function installShippingMappingTable($setup, $context){
+        $tableName = $setup->getTable($setup->getTable('hipay_cart_mapping_shipping'));
+
+        if ($setup->getConnection()->isTableExists($tableName)) {
+            if (version_compare($context->getVersion(), '1.10.2', '<')) {
+
+                $columns = [
+                    'magento_shipping_code_custom' => [
+                        'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                        'nullable' => true,
+                        'comment' => 'Magento Shipping',
+                    ],
+                ];
+
+                $this->addColumns($columns, $tableName, $setup);
+
+                $connection = $setup->getConnection();
+                $idx = $connection->getIndexName('hipay_cart_mapping_shipping', 'magento_shipping_code', \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE);
+                $connection->dropIndex('hipay_cart_mapping_shipping', $idx);
+            }
+        } else {
             /**
              * Create table 'hipay_cart_mapping_shipping
              *
@@ -331,13 +358,19 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'magento_shipping_code',
                     \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
                     255,
-                    ['nullable' => false, 'nullable' => false],
+                    ['nullable' => false],
                     'Magento Shipping'
+                )->addColumn(
+                    'magento_shipping_code_custom',
+                    \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                    255,
+                    ['nullable' => true],
+                    'Magento Custom Shipping'
                 )->addColumn(
                     'hipay_shipping_id',
                     \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
                     null,
-                    ['nullable' => true, 'unsigned' => true, 'nullable' => true],
+                    ['nullable' => true, 'unsigned' => true],
                     'HiPay Shipping'
                 )->addColumn(
                     'delay_preparation',
@@ -351,20 +384,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     null,
                     ['unsigned' => true],
                     'Delay delivery'
-                )->addIndex(
-                    $installer->getIdxName(
-                        'magento_shipping_code',
-                        ['magento_shipping_code'],
-                        \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE
-                    ),
-                    ['magento_shipping_code'],
-                    ['type' => \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE]
                 );
 
             $setup->getConnection()->createTable($table);
         }
-
-        $setup->endSetup();
     }
 
     /**
