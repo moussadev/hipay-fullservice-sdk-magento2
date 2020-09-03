@@ -118,9 +118,13 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
 
         $customField->setAfterElementHtml('
             <script>
-            function toggleCustomShipping() {         
-                console.log("Toggled");
-                jQuery("#cart_mappingshipping_magento_shipping_code_custom").parents(".field").toggle(jQuery("#cart_mappingshipping_magento_shipping_code").val() === "hipay_shipping_custom");
+            function toggleCustomShipping() {
+                if(jQuery("#cart_mappingshipping_magento_shipping_code").val() === "hipay_shipping_custom"){
+                    jQuery("#cart_mappingshipping_magento_shipping_code_custom").parents(".field").show();
+                } else {
+                    jQuery("#cart_mappingshipping_magento_shipping_code_custom").parents(".field").hide();
+                    jQuery("#cart_mappingshipping_magento_shipping_code_custom").val("");
+                }
             }
             
             window.onload = toggleCustomShipping;
