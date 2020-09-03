@@ -318,7 +318,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $setup->endSetup();
     }
 
-    private function installShippingMappingTable($setup, $context){
+    private function installShippingMappingTable(SchemaSetupInterface $setup, ModuleContextInterface $context){
         $tableName = $setup->getTable($setup->getTable('hipay_cart_mapping_shipping'));
 
         if ($setup->getConnection()->isTableExists($tableName)) {
@@ -335,8 +335,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 $this->addColumns($columns, $tableName, $setup);
 
                 $connection = $setup->getConnection();
-                $idx = $connection->getIndexName('hipay_cart_mapping_shipping', 'magento_shipping_code', \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE);
-                $connection->dropIndex('hipay_cart_mapping_shipping', $idx);
+                $connection->dropIndex($tableName, 'MAGE_MAGENTO_SHIPPING_CODE_MAGENTO_SHIPPING_CODE');
             }
         } else {
             /**
