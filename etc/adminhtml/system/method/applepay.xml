@@ -20,7 +20,7 @@
 -->
 <include xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_include.xsd">
     <group id="hipay_applepay" translate="label" type="text" sortOrder="51" showInDefault="1" showInWebsite="1" showInStore="1">
-        <label>HiPay Enterprise Apple Pay</label>
+        <label>Apple Pay</label>
         <comment></comment>
         <include path="HiPay_FullserviceMagento::system/method/base_top.xml"/>
         <field id="display_name" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">

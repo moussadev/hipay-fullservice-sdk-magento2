@@ -37,7 +37,7 @@ class Decline extends Fullservice
     private $orderFactory;
 
     /**
-     * Cancel constructor.
+     * Decline constructor.
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Magento\Customer\Model\Session $customerSession
      * @param \Magento\Checkout\Model\Session $checkoutSession
@@ -53,7 +53,8 @@ class Decline extends Fullservice
         \Magento\Framework\Session\Generic $hipaySession,
         \Psr\Log\LoggerInterface $logger,
         \HiPay\FullserviceMagento\Model\Gateway\Factory $gatewayManagerFactory,
-        \Magento\Sales\Model\OrderFactory $orderFactory
+        \Magento\Sales\Model\OrderFactory $orderFactory,
+        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
     ) {
         $this->orderFactory = $orderFactory;
         parent::__construct(
@@ -62,7 +63,8 @@ class Decline extends Fullservice
             $checkoutSession,
             $hipaySession,
             $logger,
-            $gatewayManagerFactory
+            $gatewayManagerFactory,
+            $resultJsonFactory
         );
     }
 
