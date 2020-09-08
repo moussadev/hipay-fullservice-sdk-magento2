@@ -6,8 +6,8 @@ web_https:
     - ./bin/docker/conf/development/hipay.env
   environment:
     MAGE_DB_HOST: database_https
-    MAGE_BASE_URL: http://cb223b007fa0.ngrok.io
-    MAGE_BASE_URL_SECURE: https://cb223b007fa0.ngrok.io
+    MAGE_BASE_URL: http://<domain>.ngrok.io
+    MAGE_BASE_URL_SECURE: https://<domain>.ngrok.io
     MAGE_USE_SECURE: 1
     MAGE_USE_SECURE_ADMIN: 1
   ports:

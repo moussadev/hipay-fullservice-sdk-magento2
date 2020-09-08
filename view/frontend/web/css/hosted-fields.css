@@ -54,7 +54,7 @@
 }
 
 #hipay-container {
-  font-family: "Roboto", sans-serif;
+  font-family: 'Roboto', sans-serif;
   background-color: white;
 }
 
@@ -222,6 +222,8 @@
   display: block;
 }
 
-.hipay-field.applepay-button {
-  height: 100%;
+#hipay-apple-pay-button {
+  width: 50%;
+  margin: auto;
+  flex-grow: 0;
 }
