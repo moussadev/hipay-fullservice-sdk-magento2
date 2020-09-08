@@ -72,7 +72,13 @@ define([
       this._super();
     },
     isApplePayAllowed: function () {
-      if (window.ApplePaySession && window.ApplePaySession.canMakePayments()) {
+      var canMakePayment = false;
+      try {
+        canMakePayment = window.ApplePaySession.canMakePayments();
+      } catch (e) {
+        return false;
+      }
+      if (canMakePayment) {
         canMakeApplePay(true);
 
         var self = this;
@@ -145,6 +151,8 @@ define([
           });
         }
         return true;
+      } else {
+        return false;
       }
     },
 
