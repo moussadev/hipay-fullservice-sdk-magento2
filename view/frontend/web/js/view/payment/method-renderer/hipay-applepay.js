@@ -31,6 +31,7 @@ define([
       template: 'HiPay_FullserviceMagento/payment/hipay-applepay',
       creditCardToken: null,
       creditCardType: 'cb',
+      instanceApplePay: null,
       eci: window.checkoutConfig.payment.hiPayFullservice.defaultEci,
       placeOrderStatusUrl:
         window.checkoutConfig.payment.hiPayFullservice.placeOrderStatusUrl
@@ -82,27 +83,6 @@ define([
         canMakeApplePay(true);
 
         var self = this;
-        const total = {
-          label: self.displayName,
-          amount: Number(self.amount).toFixed(2)
-        };
-
-        const request = {
-          countryCode:
-            self.locale.length > 3 ? self.locale.substr(3).toUpperCase() : 'US',
-          currencyCode: self.currency,
-          total: total
-        };
-
-        const configApplePay = {
-          displayName: self.displayName,
-          request: request,
-          selector: 'hipay-apple-pay-button',
-          applePayStyle: {
-            type: self.buttonType,
-            color: self.buttonColour
-          }
-        };
 
         var hipaySdk = new HiPay({
           username: self.apiUsernameTokenJs,
@@ -111,49 +91,66 @@ define([
           lang: self.locale.length > 2 ? self.locale.substr(0, 2) : 'en'
         });
 
-        var instanceApplePay = hipaySdk.create(
-          'paymentRequestButton',
-          configApplePay
-        );
+        self.instanceApplePay = hipaySdk.create('paymentRequestButton', {
+          displayName: self.displayName,
+          request: {
+            countryCode:
+              self.locale.length > 3
+                ? self.locale.substr(3).toUpperCase()
+                : 'US',
+            currencyCode: self.currency,
+            total: {
+              label: self.displayName,
+              amount: Number(self.amount).toFixed(2)
+            }
+          },
+          selector: 'hipay-apple-pay-button',
+          applePayStyle: {
+            type: self.buttonType,
+            color: self.buttonColour
+          }
+        });
 
-        if (instanceApplePay) {
-          instanceApplePay.on('paymentAuthorized', function (tokenHipay) {
-            self.creditCardToken(tokenHipay.token);
-            self.creditCardType(
-              tokenHipay.brand.toLowerCase().replace(/ /g, '-') ||
-                self.creditCardType
-            );
-
-            var deferred = $.Deferred();
-            $.when(placeOrderAction(self.getData(), self.messageContainer))
-              .fail(function (error) {
-                deferred.reject(Error(error));
-                instanceApplePay.completePaymentWithFailure();
-              })
-              .done(function () {
-                deferred.resolve(true);
-                storage
-                  .get(self.placeOrderStatusUrl)
-                  .done(function (response) {
-                    if (response && response.statusOK === true) {
-                      instanceApplePay.completePaymentWithSuccess();
-                    } else {
-                      instanceApplePay.completePaymentWithFailure();
-                    }
-                    $.mage.redirect(response.redirectUrl);
-                  })
-                  .fail(function () {
-                    instanceApplePay.completePaymentWithFailure();
-                    $.mage.redirect(self.afterPlaceOrderUrl);
-                  });
-              });
-            $('body').loader('hide');
-          });
+        if (self.instanceApplePay) {
+          self.instanceApplePay.on('paymentAuthorized', self.paymentAuthorized);
         }
         return true;
       } else {
         return false;
       }
+    },
+
+    paymentAuthorized: function (tokenHipay) {
+      var body = $('body');
+      self.creditCardToken(tokenHipay.token);
+      self.creditCardType(
+        tokenHipay.brand.toLowerCase().replace(/ /g, '-') || self.creditCardType
+      );
+
+      var deferred = $.Deferred();
+      $.when(placeOrderAction(self.getData(), self.messageContainer))
+        .fail(function (error) {
+          deferred.reject(Error(error));
+          self.instanceApplePay.completePaymentWithFailure();
+        })
+        .done(function () {
+          deferred.resolve(true);
+          storage
+            .get(self.placeOrderStatusUrl)
+            .done(function (response) {
+              if (response && response.statusOK === true) {
+                self.instanceApplePay.completePaymentWithSuccess();
+              } else {
+                self.instanceApplePay.completePaymentWithFailure();
+              }
+              $.mage.redirect(response.redirectUrl);
+            })
+            .fail(function () {
+              self.instanceApplePay.completePaymentWithFailure();
+              $.mage.redirect(self.afterPlaceOrderUrl);
+            });
+        });
+      body.loader('hide');
     },
 
     /**
