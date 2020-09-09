@@ -17,13 +17,13 @@
 namespace HiPay\FullserviceMagento\Model;
 
 use HiPay\FullserviceMagento\Model\Config\AbstractConfig;
+use HiPay\FullserviceMagento\Model\Method\ApplePay;
 use HiPay\FullserviceMagento\Model\System\Config\Source\Environments;
 use HiPay\FullserviceMagento\Model\System\Config\Source\PaymentActions;
 use HiPay\FullserviceMagento\Model\System\Config\Source\PaymentProduct;
 use HiPay\FullserviceMagento\Model\System\Config\Source\Templates;
 use HiPay\Fullservice\HTTP\Configuration\Configuration as ConfigSDK;
 use HiPay\Fullservice\HTTP\Configuration\ConfigurationInterface;
-use HiPay\FullserviceMagento\Model\Method\ApplePay;
 
 /**
  * Main Config Class
@@ -139,7 +139,9 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
         $this->_forceMoto = (isset($params['forceMoto'])) ? $params['forceMoto'] : false;
         $this->_forceStage = (isset($params['forceStage'])) ? $params['forceStage'] : false;
-        $this->_isApplePay = (isset($params['isApplePay'])) ? $params['isApplePay'] : false;
+        $this->_isApplePay =
+            (isset($params['isApplePay']) || $this->getMethodCode() === ApplePay::HIPAY_METHOD_CODE)
+            ? $params['isApplePay'] : false;
 
         $apiUsername = $this->getApiUsername();
         $apiPassword = $this->getApiPassword();
@@ -315,7 +317,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function getApiUsername()
     {
-        if ($this->getMethodCode() === ApplePay::HIPAY_METHOD_CODE || $this->_isApplePay) {
+        if ($this->_isApplePay) {
             return $this->getApiUsernameApplePay();
         }
 
@@ -333,7 +335,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function getApiPassword()
     {
-        if ($this->getMethodCode() === ApplePay::HIPAY_METHOD_CODE || $this->_isApplePay) {
+        if ($this->_isApplePay) {
             return $this->getApiPasswordApplePay();
         }
 
@@ -351,7 +353,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
 
     public function getSecretPassphrase()
     {
-        if ($this->getMethodCode() === ApplePay::HIPAY_METHOD_CODE || $this->_isApplePay) {
+        if ($this->_isApplePay) {
             return $this->getSecretPassphraseApplePay();
         }
 
@@ -462,7 +464,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
     public function getHashingAlgorithm()
     {
         $group = 'hipay_credentials';
-        if ($this->getMethodCode() === ApplePay::HIPAY_METHOD_CODE || $this->_isApplePay) {
+        if ($this->_isApplePay) {
             $group = 'hipay_credentials_applepay';
         } elseif ($this->mustUseMotoCredentials()) {
             $group = 'hipay_credentials_moto';
@@ -478,7 +480,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
     public function setHashingAlgorithm($hash, $scope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES)
     {
         $group = 'hipay_credentials';
-        if ($this->getMethodCode() === ApplePay::HIPAY_METHOD_CODE || $this->_isApplePay) {
+        if ($this->_isApplePay) {
             $group = 'hipay_credentials_applepay';
         } elseif ($this->mustUseMotoCredentials()) {
             $group = 'hipay_credentials_moto';
