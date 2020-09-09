@@ -65,6 +65,9 @@ abstract class Fullservice extends AppAction
      */
     protected $_gatewayManagerFactory;
 
+    /**
+     * @var \Magento\Framework\Controller\Result\JsonFactory
+     */
     protected $resultJsonFactory;
 
     /**
@@ -77,6 +80,7 @@ abstract class Fullservice extends AppAction
      * @param Factory $requestfactory ,
      * @param \Psr\Log\LoggerInterface $logger
      * @param \HiPay\FullserviceMagento\Model\Gateway\Factory $gatewayManagerFactory
+     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
      * {@inheritDoc}
      *
      * @see \Magento\Backend\App\AbstractAction::__construct()
