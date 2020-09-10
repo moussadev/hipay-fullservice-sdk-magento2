@@ -112,7 +112,9 @@ define([
         });
 
         if (self.instanceApplePay) {
-          self.instanceApplePay.on('paymentAuthorized', self.paymentAuthorized);
+          self.instanceApplePay.on('paymentAuthorized', function (token) {
+            self.paymentAuthorized(self, token);
+          });
         }
         return true;
       } else {
@@ -120,7 +122,7 @@ define([
       }
     },
 
-    paymentAuthorized: function (tokenHipay) {
+    paymentAuthorized: function (self, tokenHipay) {
       var body = $('body');
       self.creditCardToken(tokenHipay.token);
       self.creditCardType(
