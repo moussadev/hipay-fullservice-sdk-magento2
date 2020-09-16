@@ -50,6 +50,9 @@ define([
       apiPasswordTokenJs: window.checkoutConfig.payment.hipay_applepay
         ? window.checkoutConfig.payment.hipay_applepay.apiPasswordTokenJs
         : '',
+      merchantId: window.checkoutConfig.payment.hipay_applepay
+        ? window.checkoutConfig.payment.hipay_applepay.merchant_id
+        : '',
       displayName: window.checkoutConfig.payment.hipay_applepay
         ? window.checkoutConfig.payment.hipay_applepay.display_name
         : '',
@@ -73,53 +76,54 @@ define([
       this._super();
     },
     isApplePayAllowed: function () {
-      var canMakePayment = false;
-      try {
-        canMakePayment = window.ApplePaySession.canMakePayments();
-      } catch (e) {
-        return false;
-      }
-      if (canMakePayment) {
-        canMakeApplePay(true);
+      var self = this;
 
-        var self = this;
+      var hipaySdk = new HiPay({
+        username: self.apiUsernameTokenJs,
+        password: self.apiPasswordTokenJs,
+        environment: self.env,
+        lang: self.locale.length > 2 ? self.locale.substr(0, 2) : 'en'
+      });
 
-        var hipaySdk = new HiPay({
-          username: self.apiUsernameTokenJs,
-          password: self.apiPasswordTokenJs,
-          environment: self.env,
-          lang: self.locale.length > 2 ? self.locale.substr(0, 2) : 'en'
-        });
-
-        self.instanceApplePay = hipaySdk.create('paymentRequestButton', {
-          displayName: self.displayName,
-          request: {
-            countryCode:
-              self.locale.length > 3
-                ? self.locale.substr(3).toUpperCase()
-                : 'US',
-            currencyCode: self.currency,
-            total: {
-              label: self.displayName,
-              amount: Number(self.amount).toFixed(2)
+      hipaySdk
+        .canMakePaymentsWithActiveCard(self.merchantId)
+        .then((canMakePayments) => {
+          if (canMakePayments) {
+            const applePayConfig = {
+              request: {
+                countryCode:
+                  self.locale.length > 3
+                    ? self.locale.substr(3).toUpperCase()
+                    : 'US',
+                currencyCode: self.currency,
+                total: {
+                  label: self.displayName,
+                  amount: Number(self.amount).toFixed(2)
+                }
+              },
+              selector: 'hipay-apple-pay-button',
+              applePayStyle: {
+                type: self.buttonType,
+                color: self.buttonColour
+              }
+            };
+            if (self.displayName) {
+              applePayConfig.displayName = self.displayName;
             }
-          },
-          selector: 'hipay-apple-pay-button',
-          applePayStyle: {
-            type: self.buttonType,
-            color: self.buttonColour
+
+            self.instanceApplePay = hipaySdk.create(
+              'paymentRequestButton',
+              applePayConfig
+            );
+
+            if (self.instanceApplePay) {
+              self.instanceApplePay.on('paymentAuthorized', function (token) {
+                self.paymentAuthorized(self, token);
+              });
+              return true;
+            }
           }
         });
-
-        if (self.instanceApplePay) {
-          self.instanceApplePay.on('paymentAuthorized', function (token) {
-            self.paymentAuthorized(self, token);
-          });
-        }
-        return true;
-      } else {
-        return false;
-      }
     },
 
     paymentAuthorized: function (self, tokenHipay) {
