@@ -117,6 +117,7 @@ define([
             );
 
             if (self.instanceApplePay) {
+              canMakeApplePay(true);
               self.instanceApplePay.on('paymentAuthorized', function (token) {
                 self.paymentAuthorized(self, token);
               });
