@@ -50,9 +50,7 @@ define([
       apiPasswordTokenJs: window.checkoutConfig.payment.hipay_applepay
         ? window.checkoutConfig.payment.hipay_applepay.apiPasswordTokenJs
         : '',
-      merchantId: window.checkoutConfig.payment.hipay_applepay
-        ? window.checkoutConfig.payment.hipay_applepay.merchant_id
-        : '',
+      merchantId: window.checkoutConfig.payment.hipay_applepay.merchant_id,
       displayName: window.checkoutConfig.payment.hipay_applepay
         ? window.checkoutConfig.payment.hipay_applepay.display_name
         : '',
@@ -75,56 +73,86 @@ define([
     initialize: function () {
       this._super();
     },
-    isApplePayAllowed: function () {
-      var self = this;
 
-      var hipaySdk = new HiPay({
+    initHostedFields: function (self) {
+      return new HiPay({
         username: self.apiUsernameTokenJs,
         password: self.apiPasswordTokenJs,
         environment: self.env,
         lang: self.locale.length > 2 ? self.locale.substr(0, 2) : 'en'
       });
+    },
 
-      hipaySdk
-        .canMakePaymentsWithActiveCard(self.merchantId)
-        .then((canMakePayments) => {
-          if (canMakePayments) {
-            const applePayConfig = {
-              request: {
-                countryCode:
-                  self.locale.length > 3
-                    ? self.locale.substr(3).toUpperCase()
-                    : 'US',
-                currencyCode: self.currency,
-                total: {
-                  label: self.displayName,
-                  amount: Number(self.amount).toFixed(2)
-                }
-              },
-              selector: 'hipay-apple-pay-button',
-              applePayStyle: {
-                type: self.buttonType,
-                color: self.buttonColour
-              }
-            };
-            if (self.displayName) {
-              applePayConfig.displayName = self.displayName;
+    isApplePayVisible: function () {
+      return canMakeApplePay();
+    },
+
+    isApplePayAllowed: function () {
+      var self = this;
+
+      if (self.merchantId) {
+        var hipaySdk = self.initHostedFields(self);
+
+        hipaySdk
+          .canMakePaymentsWithActiveCard(self.merchantId)
+          .then(function (canMakePayments) {
+            if (canMakePayments) {
+              self.initApplePayField(self, hipaySdk);
             }
+          });
+        return true;
+      } else {
+        var canMakePayments = false;
+        try {
+          canMakePayments = window.ApplePaySession.canMakePayments();
+        } catch (e) {
+          return false;
+        }
+        if (canMakePayments) {
+          return self.initApplePayField(self);
+        }
+      }
+    },
 
-            self.instanceApplePay = hipaySdk.create(
-              'paymentRequestButton',
-              applePayConfig
-            );
+    initApplePayField: function (self, hipaySdk) {
+      if (!hipaySdk) {
+        hipaySdk = self.initHostedFields(self);
+      }
 
-            if (self.instanceApplePay) {
-              canMakeApplePay(true);
-              self.instanceApplePay.on('paymentAuthorized', function (token) {
-                self.paymentAuthorized(self, token);
-              });
-              return true;
-            }
+      const applePayConfig = {
+        request: {
+          countryCode:
+            self.locale.length > 3 ? self.locale.substr(3).toUpperCase() : 'US',
+          currencyCode: self.currency,
+          total: {
+            label: self.displayName,
+            amount: Number(self.amount).toFixed(2)
           }
+        },
+        selector: 'hipay-apple-pay-button',
+        applePayStyle: {
+          type: self.buttonType,
+          color: self.buttonColour
+        }
+      };
+      if (self.displayName) {
+        applePayConfig.displayName = self.displayName;
+      }
+
+      self.instanceApplePay = hipaySdk.create(
+        'paymentRequestButton',
+        applePayConfig
+      );
+
+      if (self.instanceApplePay) {
+        canMakeApplePay(true);
+
+        self.instanceApplePay.on('paymentAuthorized', function (token) {
+          self.paymentAuthorized(self, token);
         });
+
+        return true;
+      }
     },
 
     paymentAuthorized: function (self, tokenHipay) {
