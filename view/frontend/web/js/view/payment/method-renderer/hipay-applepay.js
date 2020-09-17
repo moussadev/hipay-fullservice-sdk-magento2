@@ -51,9 +51,7 @@ define([
         ? window.checkoutConfig.payment.hipay_applepay.apiPasswordTokenJs
         : '',
       merchantId: window.checkoutConfig.payment.hipay_applepay.merchant_id,
-      displayName: window.checkoutConfig.payment.hipay_applepay
-        ? window.checkoutConfig.payment.hipay_applepay.display_name
-        : '',
+      displayName: window.checkoutConfig.payment.hipay_applepay.display_name,
       buttonType: window.checkoutConfig.payment.hipay_applepay
         ? window.checkoutConfig.payment.hipay_applepay.button_type
         : 'plain',
@@ -90,6 +88,10 @@ define([
     isApplePayAllowed: function () {
       var self = this;
 
+      if (!self.displayName) {
+        return false;
+      }
+
       if (self.merchantId) {
         var hipaySdk = self.initHostedFields(self);
 
@@ -100,6 +102,7 @@ define([
               self.initApplePayField(self, hipaySdk);
             }
           });
+        // Mandatory
         return true;
       } else {
         var canMakePayments = false;
@@ -120,6 +123,7 @@ define([
       }
 
       const applePayConfig = {
+        displayName: self.displayName,
         request: {
           countryCode:
             self.locale.length > 3 ? self.locale.substr(3).toUpperCase() : 'US',
@@ -135,9 +139,6 @@ define([
           color: self.buttonColour
         }
       };
-      if (self.displayName) {
-        applePayConfig.displayName = self.displayName;
-      }
 
       self.instanceApplePay = hipaySdk.create(
         'paymentRequestButton',
