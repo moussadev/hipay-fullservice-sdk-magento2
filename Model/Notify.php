@@ -816,6 +816,8 @@ class Notify
      */
     protected function _doTransactionCaptureRefused()
     {
+        $this->_changeStatus(Config::STATUS_CAPTURE_REFUSED, 'Capture Refused.');
+
         if ($this->_order->hasInvoices()) {
             foreach ($this->_order->getInvoiceCollection() as $invoice) {
                 if ($invoice->getState() == \Magento\Sales\Model\Order\Invoice::STATE_OPEN

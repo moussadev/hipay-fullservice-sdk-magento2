@@ -62,6 +62,10 @@ class InstallData implements InstallDataInterface
                 "label" => __('Capture requested'),
                 'state' => Order::STATE_PROCESSING
             ],
+            Config::STATUS_CAPTURE_REFUSED => [
+                "label" => __('Capture refused'),
+                'state' => Order::STATE_PROCESSING
+            ],
             Config::STATUS_PARTIALLY_CAPTURED => [
                 "label" => __('Partially captured'),
                 'state' => Order::STATE_PROCESSING

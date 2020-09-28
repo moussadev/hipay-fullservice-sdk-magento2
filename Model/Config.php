@@ -40,6 +40,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
     const STATUS_AUTHORIZATION_REQUESTED = 'hipay_authorization_requested';
     const STATUS_AUTHORIZED_PENDING = "hipay_authorized_pending";
     const STATUS_CAPTURE_REQUESTED = 'hipay_capture_requested';
+    const STATUS_CAPTURE_REFUSED = 'hipay_capture_refused';
     const STATUS_PARTIALLY_CAPTURED = 'hipay_partially_captured';
     const STATUS_REFUND_REQUESTED = 'hipay_refund_requested';
     const STATUS_REFUND_REFUSED = 'hipay_refund_refused';
@@ -109,8 +110,7 @@ class Config extends AbstractConfig implements ConfigurationInterface
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
         \Magento\Framework\App\Cache\Frontend\Pool $cacheFrontendPool,
         $params = []
-    )
-    {
+    ) {
         parent::__construct($scopeConfig, $configWriter);
 
         $this->_storeManager = $storeManager;
