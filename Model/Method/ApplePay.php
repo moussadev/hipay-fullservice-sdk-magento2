@@ -52,4 +52,49 @@ class ApplePay extends FullserviceMethod
     {
         return (bool) (int) $this->getConfigData('active', $storeId) && $this->_hipayConfig->hasCredentials(false, true);
     }
+
+    /**
+     * Perform actions based on passed action name
+     *
+     * @param string $action
+     * @param Magento\Payment\Model\InfoInterface $payment
+     * @return void
+     */
+    protected function processAction($action, $payment)
+    {
+        $totalDue = $payment->getOrder()->getTotalDue();
+        $baseTotalDue = $payment->getOrder()->getBaseTotalDue();
+
+        switch ($action) {
+            case \HiPay\FullserviceMagento\Model\System\Config\Source\PaymentActions::PAYMENT_ACTION_AUTH:
+                $this->authorize($payment, $baseTotalDue);
+                // base amount will be set inside
+                $payment->setAmountAuthorized($totalDue);
+                break;
+            case \HiPay\FullserviceMagento\Model\System\Config\Source\PaymentActions::PAYMENT_ACTION_SALE:
+                $payment->setAmountAuthorized($totalDue);
+                $payment->setBaseAmountAuthorized($baseTotalDue);
+                $this->capture($payment, $payment->getOrder()->getBaseGrandTotal());
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Authorize payment abstract method
+     *
+     * @param \Magento\Payment\Model\InfoInterface $payment
+     * @param float $amount
+     * @return $this
+     * @throws LocalizedException
+     * @api
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    {
+        parent::authorize($payment, $amount);
+        $this->place($payment);
+        return $this;
+    }
 }

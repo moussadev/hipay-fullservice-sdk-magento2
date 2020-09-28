@@ -174,12 +174,16 @@ define([
           storage
             .get(self.placeOrderStatusUrl)
             .done(function (response) {
-              if (response && response.statusOK === true) {
-                self.instanceApplePay.completePaymentWithSuccess();
-              } else {
-                self.instanceApplePay.completePaymentWithFailure();
+              if (response) {
+                if (response.redirectUrl && response.statusOK === true) {
+                  self.instanceApplePay.completePaymentWithSuccess();
+                } else {
+                  self.instanceApplePay.completePaymentWithFailure();
+                }
+                if (response.redirectUrl) {
+                  $.mage.redirect(response.redirectUrl);
+                }
               }
-              $.mage.redirect(response.redirectUrl);
             })
             .fail(function () {
               self.instanceApplePay.completePaymentWithFailure();
