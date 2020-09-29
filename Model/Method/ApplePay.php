@@ -43,6 +43,13 @@ class ApplePay extends FullserviceMethod
     protected $_canUseInternal = false;
 
     /**
+     * Payment Method feature
+     *
+     * @var bool
+     */
+    protected $_isInitializeNeeded = true;
+
+    /**
      * Is active
      *
      * @param int|null $storeId
@@ -51,6 +58,27 @@ class ApplePay extends FullserviceMethod
     public function isActive($storeId = null)
     {
         return (bool) (int) $this->getConfigData('active', $storeId) && $this->_hipayConfig->hasCredentials(false, true);
+    }
+
+    /**
+     * Instantiate state and set it to state object
+     *
+     * @param string $paymentAction
+     * @param \Magento\Framework\DataObject $stateObject
+     * @return void
+     */
+    public function initialize($paymentAction, $stateObject)
+    {
+
+        $payment = $this->getInfoInstance();
+        $order = $payment->getOrder();
+        $order->setCanSendNewEmailFlag(false);
+        $payment->setAmountAuthorized($order->getTotalDue());
+        $payment->setBaseAmountAuthorized($order->getBaseTotalDue());
+
+        $this->processAction($paymentAction, $payment);
+
+        $stateObject->setIsNotified(false);
     }
 
     /**
