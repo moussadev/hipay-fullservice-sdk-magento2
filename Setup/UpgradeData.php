@@ -76,11 +76,11 @@ class UpgradeData implements UpgradeDataInterface
                 'visible_on_front' => 1
             ];
             
-            $connection->insertArray($setup->getTable('sales_order_status'), ['status', 'label'], $newStatus);
+            $connection->insertArray($setup->getTable('sales_order_status'), ['status', 'label'], [$newStatus]);
             $connection->insertArray(
                 $setup->getTable('sales_order_status_state'),
                 ['status', 'state', 'is_default', 'visible_on_front'],
-                $newStatusState
+                [$newStatusState]
             );
         }
 
