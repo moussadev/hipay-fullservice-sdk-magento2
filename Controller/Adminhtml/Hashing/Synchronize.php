@@ -124,7 +124,9 @@ class Synchronize extends \Magento\Backend\App\Action
                 );
                 try {
                     $this->_hipayHelper->updateHashAlgorithm($config, $gatewayClient, $store, $scope);
-                } catch (\HiPay\Fullservice\Exception\RuntimeException $e) {
+                } catch (\HiPay\Fullservice\Exception\RuntimeException |
+                    \HiPay\Fullservice\Exception\ApiErrorException $e
+                ) {
                     $this->messageManager->addErrorMessage(
                         __(
                             "We can't synchronize at least one of the account ("
