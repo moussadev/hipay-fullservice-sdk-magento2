@@ -21,8 +21,9 @@ define([
   'jquery',
   'Magento_Checkout/js/view/payment/default',
   'Magento_Checkout/js/action/place-order',
+  'Magento_Checkout/js/model/quote',
   'mage/storage'
-], function (ko, $, Component, placeOrderAction, storage) {
+], function (ko, $, Component, placeOrderAction, quote, storage) {
   'use strict';
 
   var canMakeApplePay = ko.observable(false);
@@ -32,6 +33,8 @@ define([
       creditCardToken: null,
       creditCardType: 'cb',
       instanceApplePay: null,
+      totals: quote.totals,
+      applePayConfig: null,
       eci: window.checkoutConfig.payment.hiPayFullservice.defaultEci,
       placeOrderStatusUrl:
         window.checkoutConfig.payment.hiPayFullservice.placeOrderStatusUrl
@@ -39,8 +42,6 @@ define([
       afterPlaceOrderUrl:
         window.checkoutConfig.payment.hiPayFullservice.afterPlaceOrderUrl
           .hipay_applepay,
-      amount: window.checkoutConfig.totalsData.base_grand_total,
-      currency: window.checkoutConfig.totalsData.base_currency_code,
       env: window.checkoutConfig.payment.hipay_applepay
         ? window.checkoutConfig.payment.hipay_applepay.env
         : 'stage',
@@ -58,18 +59,25 @@ define([
       buttonColour: window.checkoutConfig.payment.hipay_applepay
         ? window.checkoutConfig.payment.hipay_applepay.button_colour
         : 'black',
-      locale:
-        window.checkoutConfig.payment.hiPayFullservice &&
-        window.checkoutConfig.payment.hiPayFullservice.locale
-          ? window.checkoutConfig.payment.hiPayFullservice.locale.hipay_applepay
-          : 'en_us'
+      locale: window.checkoutConfig.payment.hiPayFullservice.locale
+        ? window.checkoutConfig.payment.hiPayFullservice.locale.hipay_applepay
+        : 'en_us'
     },
 
     placeOrderHandler: null,
     validateHandler: null,
 
     initialize: function () {
-      this._super();
+      var self = this;
+      self._super();
+      self.totals.subscribe(function (newValue) {
+        if (self.instanceApplePay) {
+          self.applePayConfig.request.total.amount = Number(
+            newValue.base_grand_total
+          ).toFixed(2);
+          self.instanceApplePay.update(self.applePayConfig);
+        }
+      });
     },
 
     initHostedFields: function (self) {
@@ -87,6 +95,10 @@ define([
 
     isApplePayAllowed: function () {
       var self = this;
+
+      if (self.instanceApplePay) {
+        return true;
+      }
 
       if (!self.displayName) {
         return false;
@@ -122,15 +134,14 @@ define([
         hipaySdk = self.initHostedFields(self);
       }
 
-      const applePayConfig = {
+      self.applePayConfig = {
         displayName: self.displayName,
         request: {
-          countryCode:
-            self.locale.length > 3 ? self.locale.substr(3).toUpperCase() : 'US',
-          currencyCode: self.currency,
+          countryCode: quote.billingAddress().countryId,
+          currencyCode: quote.totals().quote_currency_code,
           total: {
             label: self.displayName,
-            amount: Number(self.amount).toFixed(2)
+            amount: Number(quote.totals().base_grand_total).toFixed(2)
           }
         },
         selector: 'hipay-apple-pay-button',
@@ -142,7 +153,7 @@ define([
 
       self.instanceApplePay = hipaySdk.create(
         'paymentRequestButton',
-        applePayConfig
+        self.applePayConfig
       );
 
       if (self.instanceApplePay) {
