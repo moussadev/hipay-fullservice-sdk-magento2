@@ -34,7 +34,6 @@ define([
       creditCardType: 'cb',
       instanceApplePay: null,
       totals: quote.totals,
-      applePayConfig: null,
       eci: window.checkoutConfig.payment.hiPayFullservice.defaultEci,
       placeOrderStatusUrl:
         window.checkoutConfig.payment.hiPayFullservice.placeOrderStatusUrl
@@ -66,19 +65,6 @@ define([
 
     placeOrderHandler: null,
     validateHandler: null,
-
-    initialize: function () {
-      var self = this;
-      self._super();
-      self.totals.subscribe(function (newValue) {
-        if (self.instanceApplePay) {
-          self.applePayConfig.request.total.amount = Number(
-            newValue.base_grand_total
-          ).toFixed(2);
-          self.instanceApplePay.update(self.applePayConfig);
-        }
-      });
-    },
 
     initHostedFields: function (self) {
       return new HiPay({
@@ -134,7 +120,7 @@ define([
         hipaySdk = self.initHostedFields(self);
       }
 
-      self.applePayConfig = {
+      var applePayConfig = {
         displayName: self.displayName,
         request: {
           countryCode: quote.billingAddress().countryId,
@@ -153,11 +139,22 @@ define([
 
       self.instanceApplePay = hipaySdk.create(
         'paymentRequestButton',
-        self.applePayConfig
+        applePayConfig
       );
 
       if (self.instanceApplePay) {
         canMakeApplePay(true);
+
+        self.totals.subscribe(function (newValue) {
+          if (
+            applePayConfig.request.total.amount != newValue.base_grand_total
+          ) {
+            applePayConfig.request.total.amount = Number(
+              newValue.base_grand_total
+            ).toFixed(2);
+            self.instanceApplePay.update(applePayConfig);
+          }
+        });
 
         self.instanceApplePay.on('paymentAuthorized', function (token) {
           self.paymentAuthorized(self, token);
