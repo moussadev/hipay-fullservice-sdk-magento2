@@ -509,6 +509,7 @@
                 <authentication_indicator>0</authentication_indicator>
                 <allow_use_oneclick>0</allow_use_oneclick>
                 <allowspecific>0</allowspecific>
+                <specificcountry>PT</specificcountry>
                 <debug>0</debug>
                 <env>stage</env>
                 <group>hipay</group>

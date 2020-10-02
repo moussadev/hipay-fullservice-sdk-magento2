@@ -207,4 +207,5 @@ define([
       component:
         'HiPay_FullserviceMagento/js/view/payment/method-renderer/hipay-multibanco'
     }
-);
+  );
+});
