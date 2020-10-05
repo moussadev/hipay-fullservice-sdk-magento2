@@ -48,6 +48,11 @@ define([
         'HiPay_FullserviceMagento/js/view/payment/method-renderer/hipay-cc-split'
     },
     {
+      type: 'hipay_applepay',
+      component:
+        'HiPay_FullserviceMagento/js/view/payment/method-renderer/hipay-applepay'
+    },
+    {
       type: 'hipay_sisal',
       component:
         'HiPay_FullserviceMagento/js/view/payment/method-renderer/hipay-sisal'
@@ -208,4 +213,6 @@ define([
         'HiPay_FullserviceMagento/js/view/payment/method-renderer/hipay-multibanco'
     }
   );
+  /** Add view logic here if needed */
+  return Component.extend({});
 });
