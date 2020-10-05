@@ -51,7 +51,7 @@ class Mbway extends AbstractMethodAPI
 
         $phone = $order->getBillingAddress()->getTelephone();
         if (!preg_match("/^(351#)?(9[1236][0-9])([0-9]{3})?([0-9]{3})$/", $phone)) {
-            $errorMsg = __('Please check the phone number entered.');
+            $errorMsg = __('The format of the phone number must match a Portuguese phone.');
         }
 
         if ($errorMsg) {
