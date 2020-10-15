@@ -16,6 +16,7 @@
 namespace HiPay\FullserviceMagento\Model\Method\Bnpp;
 
 use HiPay\FullserviceMagento\Model\Method\AbstractMethodAPI;
+use HiPay\FullserviceMagento\Model\PhoneNumbers\PhoneHelper;
 use Magento\Framework\Exception\LocalizedException;
 
 class AbstractBnpp extends AbstractMethodAPI
@@ -53,12 +54,12 @@ class AbstractBnpp extends AbstractMethodAPI
     public function validate()
     {
         /*
-        * calling parent validate function
-        */
+         * calling parent validate function
+         */
         parent::validate();
         $paymentInfo = $this->getInfoInstance();
 
-        if(!$paymentInfo->getCcType()){
+        if (!$paymentInfo->getCcType()) {
             return $this;
         }
 
@@ -67,10 +68,16 @@ class AbstractBnpp extends AbstractMethodAPI
             $order = $paymentInfo->getOrder();
         }
 
+        $country = 'FR';
         $phone = $order->getBillingAddress()->getTelephone();
-        if (!preg_match('/(0|\+?33|0033)[1-9][0-9]{8}/', $phone)) {
-            throw new \Magento\Framework\Exception\LocalizedException('Please check the phone number entered.');
+
+        if (!$phone = PhoneHelper::isPhoneValid($phone, $country)) {
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __(PhoneHelper::getErrorMessageFromCountry($country))
+            );
         }
+
+        $order->getBillingAddress()->setTelephone($phone);
 
         return $this;
     }
