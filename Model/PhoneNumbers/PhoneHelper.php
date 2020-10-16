@@ -36,24 +36,40 @@ class PhoneHelper
      * @var array Regroup all phone infos
      */
     const PHONE_INFOS = [
+        /**
+         * Fixed: +33 2 51 xx xx xx or +33 9 xx xx xx xx
+         * Mobile: +33 6 64 xx xx xx
+         */
         'FR' => [
             'code_geographic' => '33',
-            'pattern' => '/^((\+|00)33|0)[1-9][0-9]{8}$/',
+            'pattern' => '/^(\+|00)33[1-9]\d{8}$/',
             'invalid_message' => 'a French',
         ],
+        /**
+         * Fixed: +39 051 xxxx xxxx or +39 06 xxxx xxxx
+         * Mobile: +39 310 xxx xxxxx
+         */
         'IT' => [
             'code_geographic' => '39',
-            'pattern' => '/^((\+|00)39)?3[1-6][0-9]{8}$/',
+            'pattern' => '/^(\+|00)39(3\d{9}|0[1-9]{1,2}\d{7,8})$/',
             'invalid_message' => 'an Italian',
         ],
+        /**
+         * Fixed: +32 2 512 xx xx or +32 50 33 xx xx
+         * Mobile: +32 478 xx xx xx
+         */
         'BE' => [
             'code_geographic' => '32',
-            'pattern' => '/^((\+|00)32)4(60|[789][0-9])[0-9]{6}$/',
+            'pattern' => '/^(\+|00)32(4\d{8}|[1-9]{1,2}\d{6,7})$/',
             'invalid_message' => 'a Belgian',
         ],
+        /**
+         * Fixed: +351 962 xxx xxx or +351 261 xxx xxx
+         * Mobile: +351 925 xxx xxx
+         */
         'PT' => [
             'code_geographic' => '351',
-            'pattern' => '/^((\+|00)351)?9[1236][0-9]{7}$/',
+            'pattern' => '/^(\+|00)351(9[01236]\d{7}|\d{9})$/',
             'invalid_message' => 'a Portuguese',
         ],
     ];
@@ -107,6 +123,9 @@ class PhoneHelper
             $countryPhoneCode = self::getCodeGeographicByCountry($country);
             if (!preg_match('/^((\+|00)' . $countryPhoneCode . '|0)/', $phone)) {
                 $phone = '+' . $countryPhoneCode . $phone;
+            }
+            if (preg_match('/^0/', $phone)) {
+                $phone = preg_replace('/^0/', '+' . $countryPhoneCode, $phone);
             }
 
             if ($billingAddress) {
