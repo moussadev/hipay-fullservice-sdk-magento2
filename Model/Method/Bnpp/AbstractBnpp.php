@@ -69,15 +69,13 @@ class AbstractBnpp extends AbstractMethodAPI
         }
 
         $country = 'FR';
-        $phone = $order->getBillingAddress()->getTelephone();
+        $billingAddress = $order->getBillingAddress();
 
-        if (!$phone = PhoneHelper::isPhoneValid($phone, $country)) {
+        if (!PhoneHelper::isPhoneValid($billingAddress->getTelephone(), $country, $billingAddress)) {
             throw new \Magento\Framework\Exception\LocalizedException(
-                __(PhoneHelper::getErrorMessageFromCountry($country))
+                __(PhoneHelper::getInvalidMessageByCountry($country))
             );
         }
-
-        $order->getBillingAddress()->setTelephone($phone);
 
         return $this;
     }

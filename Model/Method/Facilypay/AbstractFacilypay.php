@@ -38,16 +38,14 @@ class AbstractFacilypay extends AbstractMethodAPI
             $order = $info->getOrder();
         }
 
-        $countryCode = $order->getBillingAddress()->getCountryId();
-        $phone = $order->getBillingAddress()->getTelephone();
+        $billingAddress = $order->getBillingAddress();
+        $country = $billingAddress->getCountryId();
 
-        if (!$phone = PhoneHelper::isPhoneValid($phone, $countryCode)) {
+        if (!PhoneHelper::isPhoneValid($billingAddress->getTelephone(), $country, $billingAddress)) {
             throw new LocalizedException(
-                __(PhoneHelper::getErrorMessageFromCountry($countryCode))
+                __(PhoneHelper::getInvalidMessageByCountry($country))
             );
         }
-
-        $order->getBillingAddress()->setTelephone($phone);
 
         return $this;
     }
