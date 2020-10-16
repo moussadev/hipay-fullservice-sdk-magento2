@@ -30,7 +30,8 @@ class PhoneHelper
     /**
      * @var string Base error message
      */
-    private const ERROR_MSG_NOT_VALID = 'The format of the phone number must match a {COUNTRY} phone.';
+    private const ERROR_MSG_NOT_VALID = 'The format of the phone number must match {COUNTRY} phone.';
+
     /**
      * @var array Regroup all phone infos
      */
@@ -38,22 +39,22 @@ class PhoneHelper
         'FR' => [
             'code_geographic' => '33',
             'pattern' => '/^((\+|00)33|0)[1-9][0-9]{8}$/',
-            'error_message' => 'French',
+            'invalid_message' => 'a French',
         ],
         'IT' => [
             'code_geographic' => '39',
             'pattern' => '/^((\+|00)39)?3[1-6][0-9]{8}$/',
-            'error_message' => 'Italian',
+            'invalid_message' => 'an Italian',
         ],
         'BE' => [
             'code_geographic' => '32',
             'pattern' => '/^((\+|00)32)4(60|[789][0-9])[0-9]{6}$/',
-            'error_message' => 'Belgian',
+            'invalid_message' => 'a Belgian',
         ],
         'PT' => [
             'code_geographic' => '351',
             'pattern' => '/^((\+|00)351)?9[1236][0-9]{7}$/',
-            'error_message' => 'Portuguese',
+            'invalid_message' => 'a Portuguese',
         ],
     ];
 
@@ -65,7 +66,7 @@ class PhoneHelper
      */
     public static function getInvalidMessageByCountry($country)
     {
-        return str_replace('{COUNTRY}', self::PHONE_INFOS[$country]['error_message'], self::ERROR_MSG_NOT_VALID);
+        return str_replace('{COUNTRY}', self::PHONE_INFOS[$country]['invalid_message'], self::ERROR_MSG_NOT_VALID);
     }
 
     /**
@@ -114,6 +115,8 @@ class PhoneHelper
 
             return preg_match(self::getPatternByCountry($country), $phone);
         } catch (\Exception $e) {
+            $logger = \Magento\Framework\App\ObjectManager::getInstance()->get(\Psr\Log\LoggerInterface::class);
+            $logger->critical($e);
             return false;
         }
     }
