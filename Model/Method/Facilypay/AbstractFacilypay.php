@@ -16,7 +16,9 @@
 namespace HiPay\FullserviceMagento\Model\Method\Facilypay;
 
 use HiPay\FullserviceMagento\Model\Method\AbstractMethodAPI;
-use HiPay\FullserviceMagento\Model\PhoneNumbers\PhoneHelper;
+use libphonenumber\NumberParseException;
+use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
 use \Magento\Framework\Exception\LocalizedException;
 
 class AbstractFacilypay extends AbstractMethodAPI
@@ -38,13 +40,34 @@ class AbstractFacilypay extends AbstractMethodAPI
             $order = $info->getOrder();
         }
 
+        $phoneExceptionMessage = 'The format of the phone number must match {COUNTRY} phone.';
         $billingAddress = $order->getBillingAddress();
         $country = $billingAddress->getCountryId();
 
-        if (!PhoneHelper::isPhoneValid($billingAddress->getTelephone(), $country, $billingAddress)) {
-            throw new LocalizedException(
-                __(PhoneHelper::getInvalidMessageByCountry($country))
-            );
+        switch ($country) {
+            case 'FR':
+                $phoneExceptionMessage = str_replace('{COUNTRY}', 'a French', $phoneExceptionMessage);
+                break;
+            case 'IT':
+                $phoneExceptionMessage = str_replace('{COUNTRY}', 'an Italian', $phoneExceptionMessage);
+                break;
+            case 'BE':
+                $phoneExceptionMessage = str_replace('{COUNTRY}', 'a Belgian', $phoneExceptionMessage);
+                break;
+        }
+
+        try {
+            $phoneNumberUtil = PhoneNumberUtil::getInstance();
+            $phoneNumber = $phoneNumberUtil->parse($billingAddress->getTelephone(), $country);
+
+            if (!$phoneNumberUtil->isValidNumber($phoneNumber)) {
+                throw new LocalizedException(__($phoneExceptionMessage));
+            }
+
+            $billingAddress->setTelephone($phoneNumberUtil->format($phoneNumber, PhoneNumberFormat::E164));
+        } catch (NumberParseException | Exception $e) {
+            $this->_logger->critical($e);
+            throw new LocalizedException(__($phoneExceptionMessage));
         }
 
         return $this;

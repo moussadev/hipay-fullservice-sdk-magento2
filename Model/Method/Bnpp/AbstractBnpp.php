@@ -16,7 +16,9 @@
 namespace HiPay\FullserviceMagento\Model\Method\Bnpp;
 
 use HiPay\FullserviceMagento\Model\Method\AbstractMethodAPI;
-use HiPay\FullserviceMagento\Model\PhoneNumbers\PhoneHelper;
+use libphonenumber\NumberParseException;
+use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
 use Magento\Framework\Exception\LocalizedException;
 
 class AbstractBnpp extends AbstractMethodAPI
@@ -68,13 +70,22 @@ class AbstractBnpp extends AbstractMethodAPI
             $order = $paymentInfo->getOrder();
         }
 
+        $phoneExceptionMessage = 'The format of the phone number must match a French phone.';
         $country = 'FR';
         $billingAddress = $order->getBillingAddress();
 
-        if (!PhoneHelper::isPhoneValid($billingAddress->getTelephone(), $country, $billingAddress)) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __(PhoneHelper::getInvalidMessageByCountry($country))
-            );
+        try {
+            $phoneNumberUtil = PhoneNumberUtil::getInstance();
+            $phoneNumber = $phoneNumberUtil->parse($billingAddress->getTelephone(), $country);
+
+            if (!$phoneNumberUtil->isValidNumber($phoneNumber)) {
+                throw new LocalizedException(__($phoneExceptionMessage));
+            }
+
+            $billingAddress->setTelephone($phoneNumberUtil->format($phoneNumber, PhoneNumberFormat::E164));
+        } catch (NumberParseException | Exception $e) {
+            $this->_logger->critical($e);
+            throw new LocalizedException(__($phoneExceptionMessage));
         }
 
         return $this;
