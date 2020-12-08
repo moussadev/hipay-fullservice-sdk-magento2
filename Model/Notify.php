@@ -189,9 +189,14 @@ class Notify
             $this->_order = $this->_orderFactory->create()->loadByIncrementId($this->_transaction->getOrder()->getId());
 
             if (!$this->_order->getId()) {
-                throw new \Magento\Framework\Exception\LocalizedException(
-                    __(sprintf('Wrong order ID: "%s".', $this->_transaction->getOrder()->getId()))
+                $e = new \Magento\Framework\Exception\LocalizedException(
+                    __(sprintf('Order ID not found: "%s".', $this->_transaction->getOrder()->getId()))
                 );
+
+                $e->returnCode = 404;
+                $e->returnMessage = 'Not Found';
+                $e->returnBody = $e->getMessage();
+                throw $e;
             }
 
             if ($this->_order->getPayment()->getAdditionalInformation('profile_id') && !$this->isSplitPayment) {
@@ -250,6 +255,13 @@ class Notify
                 if (!$this->_order->hasInvoices()
                     || $this->_order->getBaseTotalDue() == $this->_order->getBaseGrandTotal()
                 ) {
+                    $canProcess = true;
+                }
+                break;
+            case TransactionStatus::CAPTURED:
+                // status : 118 - We check the 116 has been received before handling
+                $savedStatues = $this->_order->getPayment()->getAdditionalInformation('saved_statues');
+                if(is_array($savedStatues) && is_array($savedStatues[TransactionStatus::AUTHORIZED])){
                     $canProcess = true;
                 }
                 break;
@@ -357,10 +369,6 @@ class Notify
                 ) {
                     break;
                 }
-
-                if (!$this->_order->getPayment()->getAuthorizationTransaction()) {
-                    $this->_doTransactionAuthorization();
-                };
 
                 // Skip magento fraud checking
                 $this->_doTransactionCapture(true);
@@ -762,7 +770,6 @@ class Notify
     protected function _doTransactionCaptureRequested()
     {
         $this->_order->setState(\Magento\Sales\Model\Order::STATE_PROCESSING);
-        $this->_changeStatus(Config::STATUS_CAPTURE_REQUESTED, 'Capture Requested.');
     }
 
     /**
