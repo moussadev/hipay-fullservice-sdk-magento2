@@ -109,7 +109,13 @@ class CheckHttpSignatureObserver implements ObserverInterface
                 $order = $this->_orderFactory->create()->loadByIncrementId($orderId);
 
                 if (!$order->getId()) {
-                    throw new LocalizedException(__("Order not found for id: " . $orderId));
+                    $e = new LocalizedException(
+                        __(sprintf('Order ID not found: "%s".', $orderId))
+                    );
+
+                    $e->returnCode = 404;
+                    $e->returnBody = $e->getMessage();
+                    throw $e;
                 }
                 /** @var $config \HiPay\FullserviceMagento\Model\Config */
                 $config = $this->_configFactory->create(
@@ -153,8 +159,14 @@ class CheckHttpSignatureObserver implements ObserverInterface
             } catch (\Exception $e) {
                 $this->_logger->critical($e);
                 $controller->getActionFlag()->set('', \Magento\Framework\App\Action\Action::FLAG_NO_DISPATCH, true);
-                $controller->getResponse()->setBody("Exception during check signature.");
-                $controller->getResponse()->setHttpResponseCode(500);
+
+                if($e->returnCode && $e->returnBody){
+                    $controller->getResponse()->setBody($e->returnBody);
+                    $controller->getResponse()->setHttpResponseCode($e->returnCode);
+                } else {
+                    $controller->getResponse()->setBody("Exception during check signature.");
+                    $controller->getResponse()->setHttpResponseCode(500);
+                }
             }
         }
 
