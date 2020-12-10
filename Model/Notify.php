@@ -251,20 +251,31 @@ class Notify
                 }
                 break;
             case TransactionStatus::CAPTURE_REQUESTED:
-                // status : 117
-                if (!$this->_order->hasInvoices()
-                    || $this->_order->getBaseTotalDue() == $this->_order->getBaseGrandTotal()
-                ) {
-                    $canProcess = true;
-                }
-                break;
             case TransactionStatus::CAPTURED:
                 // status : 118 - We check the 116 has been received before handling
                 $savedStatues = $this->_order->getPayment()->getAdditionalInformation('saved_statues');
-                if(is_array($savedStatues) && is_array($savedStatues[TransactionStatus::AUTHORIZED])){
+                if(is_array($savedStatues) && $savedStatues[TransactionStatus::AUTHORIZED]){
                     $canProcess = true;
+                } else {
+                    $e = new \Magento\Framework\Exception\LocalizedException(
+                        __(sprintf('Order "%s" was not authorized.', $this->_transaction->getOrder()->getId()))
+                    );
+
+                    $e->returnCode = 400;
+                    $e->returnMessage = 'Bad Request';
+                    $e->returnBody = $e->getMessage();
+                    throw $e;
                 }
-                break;
+
+                // status : 117
+                if ($this->_transaction->getStatus() == TransactionStatus::CAPTURE_REQUESTED
+                    && $this->_order->hasInvoices()
+                    && $this->_order->getBaseTotalDue() != $this->_order->getBaseGrandTotal()
+                ) {
+                    $canProcess = false;
+                }
+
+            break;
             default:
                 $canProcess = true;
                 break;
