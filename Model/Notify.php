@@ -21,6 +21,7 @@ use HiPay\Fullservice\Gateway\Mapper\TransactionMapper;
 use HiPay\Fullservice\Enum\Transaction\TransactionStatus;
 use HiPay\FullserviceMagento\Model\Email\Sender\FraudReviewSender;
 use HiPay\FullserviceMagento\Model\Email\Sender\FraudDenySender;
+use Magento\Framework\Webapi\Exception as WebApiException;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\ResourceModel\Order as ResourceOrder;
 use HiPay\Fullservice\Enum\Transaction\TransactionState;
@@ -189,14 +190,10 @@ class Notify
             $this->_order = $this->_orderFactory->create()->loadByIncrementId($this->_transaction->getOrder()->getId());
 
             if (!$this->_order->getId()) {
-                $e = new \Magento\Framework\Exception\LocalizedException(
-                    __(sprintf('Order ID not found: "%s".', $this->_transaction->getOrder()->getId()))
+                throw new WebApiException(
+                    __(sprintf('Order ID not found: "%s".', $this->_transaction->getOrder()->getId())),
+                    0, WebApiException::HTTP_NOT_FOUND
                 );
-
-                $e->returnCode = 404;
-                $e->returnMessage = 'Not Found';
-                $e->returnBody = $e->getMessage();
-                throw $e;
             }
 
             if ($this->_order->getPayment()->getAdditionalInformation('profile_id') && !$this->isSplitPayment) {
@@ -257,14 +254,10 @@ class Notify
                 if(is_array($savedStatues) && $savedStatues[TransactionStatus::AUTHORIZED]){
                     $canProcess = true;
                 } else {
-                    $e = new \Magento\Framework\Exception\LocalizedException(
-                        __(sprintf('Order "%s" was not authorized.', $this->_transaction->getOrder()->getId()))
+                    throw new WebApiException(
+                        __(sprintf('Order "%s" was not authorized.', $this->_transaction->getOrder()->getId())),
+                        0, WebApiException::HTTP_BAD_REQUEST
                     );
-
-                    $e->returnCode = 400;
-                    $e->returnMessage = 'Bad Request';
-                    $e->returnBody = $e->getMessage();
-                    throw $e;
                 }
 
                 // status : 117

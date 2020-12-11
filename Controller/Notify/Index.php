@@ -18,6 +18,7 @@ namespace HiPay\FullserviceMagento\Controller\Notify;
 use Magento\Framework\App\Action\Action as AppAction;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Request\Http as HttpRequest;
+use Magento\Framework\Webapi\Exception as WebApiException;
 
 /**
  * Notification controller
@@ -77,15 +78,17 @@ class Index extends AppAction
                 ['params' => ['response' => $params]]
             );
             $notify->processTransaction();
+        } catch(WebApiException $e){
+            $this->_logger->critical($e);
+
+            $this->getResponse()->setStatusHeader($e->getHttpCode());
+            $this->getResponse()->setBody($e->getMessage())->sendResponse();
+
         } catch (\Exception $e) {
             $this->_logger->critical($e);
 
-            $returnCode = $e->returnCode ?? 400;
-            $returnMessage = $e->returnMessage ?? $e->getMessage();
-            $returnBody = $e->returnBody ?? $e->getTraceAsString();
-
-            $this->getResponse()->setStatusHeader($returnCode, '1.1', $returnMessage);
-            $this->getResponse()->setBody($returnBody)->sendResponse();
+            $this->getResponse()->setStatusHeader(400, '1.1', $e->getMessage());
+            $this->getResponse()->setBody($e->getTraceAsString())->sendResponse();
         }
 
         $this->getResponse()->setBody('OK')->sendResponse();
